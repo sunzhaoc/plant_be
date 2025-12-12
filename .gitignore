@@ -1,0 +1,61 @@
+# 编译产物（二进制文件/可执行文件）
+# 项目根目录的可执行文件（如main、app等）
+/*
+!/*.go
+!/*.mod
+!/*.sum
+!/.gitignore
+!/config/
+!/internal/
+!/pkg/
+!/cmd/
+# 或直接指定二进制文件名
+myapp
+*.exe
+*.out
+
+# 编译生成的中间文件
+*.o
+*.a
+*.so
+_obj/
+_test/
+
+# Go模块缓存
+go.sum
+# （可选，若需锁定依赖则保留go.sum，否则忽略）
+
+# Go构建缓存（Go 1.16+）
+go.work
+go.work.sum
+/dist/
+/build/
+/bin/
+
+# 依赖包（GOPATH模式下的vendor，或Go Modules的缓存）
+vendor/
+# （Go Modules项目通常无需提交vendor，除非显式使用）
+
+# IDE/编辑器配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store  # macOS系统文件
+Thumbs.db  # Windows系统文件
+
+# 日志/临时文件
+*.log
+*.tmp
+*.temp
+.env       # 环境变量配置文件（敏感信息）
+/config/*.yaml  # 若配置文件含敏感信息（如密码），需忽略
+/config/*.env
+
+# 测试覆盖率报告
+coverage.out
+*.prof
+
+# Docker相关（若用Docker）
+.dockerignore
