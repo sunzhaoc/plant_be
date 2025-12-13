@@ -84,11 +84,24 @@ func GetOSSImageBySTS(config AliConfig, objectKey string) ([]byte, error) {
 }
 
 func main() {
+	// 从环境变量读取敏感配置（自定义环境变量名，建议大写+下划线）
+	accessKeyID := os.Getenv("ALI_OSS_ACCESS_KEY_ID")
+	accessKeySecret := os.Getenv("ALI_OSS_ACCESS_KEY_SECRET")
+	roleARN := os.Getenv("ALI_OSS_ROLE_ARN")
+
+	// 校验环境变量是否配置，未配置则直接退出
+	if accessKeyID == "" || accessKeySecret == "" || roleARN == "" {
+		log.Fatalf("错误：必须配置以下环境变量后运行！\n" +
+			"  ALI_OSS_ACCESS_KEY_ID\n" +
+			"  ALI_OSS_ACCESS_KEY_SECRET\n" +
+			"  ALI_OSS_ROLE_ARN")
+	}
+
 	// 从环境变量读取配置（避免硬编码）
 	config := AliConfig{
-		AccessKeyID:     "",
-		AccessKeySecret: "",
-		RoleARN:         "",
+		AccessKeyID:     accessKeyID,
+		AccessKeySecret: accessKeySecret,
+		RoleARN:         roleARN,
 		RoleSessionName: "oss-sts-session-123",
 		OSSEndpoint:     "oss-cn-beijing.aliyuncs.com", // 正确格式（无http://）
 		OSSBucketName:   "public-plant-images",
