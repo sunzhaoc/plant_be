@@ -48,7 +48,7 @@ func DownloadImage(cfg config.AliConfig, objectKey string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func GetOssUrl(cfg config.AliConfig, objectKey string) (string, error) {
+func GetOssUrl(cfg config.AliConfig, objectKey string, width int, height int) (string, error) {
 	stsResp, err := GetSTSCredentials(cfg)
 	if err != nil {
 		return "", err
@@ -71,10 +71,25 @@ func GetOssUrl(cfg config.AliConfig, objectKey string) (string, error) {
 		return "", fmt.Errorf("获取Bucket失败: %w", err)
 	}
 
-	signedURL, err := bucket.SignURL(objectKey, oss.HTTPGet, 1000)
+	var imgProcess string
+	if width > 0 && height > 0 {
+		// 等比缩放，宽高不超过指定值（推荐）
+		imgProcess = fmt.Sprintf("image/resize,lfit,w_%d,h_%d/quality,q_80", width, height)
+	} else if width > 0 {
+		// 仅指定宽度，高度等比
+		imgProcess = fmt.Sprintf("image/resize,lfit,w_%d/quality,q_80", width)
+	} else if height > 0 {
+		// 仅指定高度，宽度等比
+		imgProcess = fmt.Sprintf("image/resize,lfit,h_%d/quality,q_80", height)
+	} else {
+		// 无缩放，仅压缩质量（可选）
+		imgProcess = "image/quality,q_80"
+	}
+
+	signedURL, err := bucket.SignURL(objectKey, oss.HTTPGet, 1000, oss.Process(imgProcess))
 	if err != nil {
 		return "", fmt.Errorf("生成签名URL失败: %v", err)
 	}
-	fmt.Println(signedURL)
+	//fmt.Println(signedURL)
 	return signedURL, nil
 }

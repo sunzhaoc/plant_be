@@ -38,11 +38,10 @@ func main() {
 	})
 	// 获取单张图片
 	r.GET("/api/plant-image", func(c *gin.Context) {
-		//plantId := c.Query("plantId")
-		//key := c.Query("key")
+		imgUrl := c.Query("imgUrl")
 
-		ossUrl := "plant/squamellaria/squamellaria_grayi/img.png"
-		signedURL, err := aliyun.GetOssUrl(cfg, ossUrl)
+		//ossUrl := "plant/squamellaria/squamellaria_grayi/img.png"
+		signedURL, err := aliyun.GetOssUrl(cfg, imgUrl, 290, 260)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ImageResponse{URL: ""})
 			return
