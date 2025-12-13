@@ -1,28 +1,66 @@
+// 简单的Gin框架示例
 package main
 
 import (
-	"log"
-	"os"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/internal/aliyun"
 	"github.com/sunzhaoc/plant_be/internal/config"
 )
 
+// ImageResponse 图片URL响应结构
+type ImageResponse struct {
+	URL string `json:"url"`
+}
+
+// ImagesResponse 批量图片响应
+type ImagesResponse struct {
+	Urls []string `json:"urls"`
+}
+
 func main() {
-	// 加载配置
+	r := gin.Default()
 	cfg := config.LoadAliConfig()
+	r.Use(func(c *gin.Context) {
+		// 允许前端域名（生产环境替换为你的前端实际域名，如http://localhost:3000）
+		c.Header("Access-Control-Allow-Origin", "*")
+		// 允许的请求方法（必须包含OPTIONS，fetch会先发OPTIONS预检请求）
+		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		// 允许的请求头
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
+		// 处理OPTIONS预检请求（fetch必触发，不处理会拦截）
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent) // 204
+			return
+		}
+		c.Next()
+	})
+	// 获取单张图片
+	r.GET("/api/plant-image", func(c *gin.Context) {
+		//plantId := c.Query("plantId")
+		//key := c.Query("key")
 
-	// 下载图片
-	objectKey := "plant/squamellaria/squamellaria_grayi/img.png"
-	imageBytes, err := aliyun.DownloadImage(cfg, objectKey)
-	if err != nil {
-		log.Fatalf("获取图片失败: %v", err)
-	}
+		ossUrl := "plant/squamellaria/squamellaria_grayi/img.png"
+		signedURL, err := aliyun.GetOssUrl(cfg, ossUrl)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ImageResponse{URL: ""})
+			return
+		}
+		c.JSON(http.StatusOK, ImageResponse{URL: signedURL})
+	})
 
-	// 保存到本地
-	if err = os.WriteFile("downloaded.jpg", imageBytes, 0644); err != nil {
-		log.Fatalf("写入文件失败: %v", err)
-	}
+	// 获取多张图片
+	r.GET("/api/plant-images", func(c *gin.Context) {
+		plantId := c.Query("plantId")
+		// 实际应用中根据plantId查询数据库获取图片列表
+		urls := []string{
+			"https://your-bucket.oss-cn-beijing.aliyuncs.com/plants/" + plantId + "/1.png",
+			"https://your-bucket.oss-cn-beijing.aliyuncs.com/plants/" + plantId + "/2.png",
+		}
 
-	log.Printf("成功！图片大小：%d 字节，已保存为downloaded.jpg", len(imageBytes))
+		c.JSON(http.StatusOK, ImagesResponse{Urls: urls})
+	})
+
+	r.Run(":8080")
 }

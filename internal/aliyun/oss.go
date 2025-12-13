@@ -47,3 +47,34 @@ func DownloadImage(cfg config.AliConfig, objectKey string) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+func GetOssUrl(cfg config.AliConfig, objectKey string) (string, error) {
+	stsResp, err := GetSTSCredentials(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	// 创建OSS客户端
+	client, err := oss.New(
+		cfg.OSSEndpoint,
+		stsResp.Credentials.AccessKeyId,
+		stsResp.Credentials.AccessKeySecret,
+		oss.SecurityToken(stsResp.Credentials.SecurityToken),
+	)
+	if err != nil {
+		return "", fmt.Errorf("创建OSS客户端失败: %w", err)
+	}
+
+	// 获取Bucket
+	bucket, err := client.Bucket(cfg.OSSBucketName)
+	if err != nil {
+		return "", fmt.Errorf("获取Bucket失败: %w", err)
+	}
+
+	signedURL, err := bucket.SignURL(objectKey, oss.HTTPGet, 1000)
+	if err != nil {
+		return "", fmt.Errorf("生成签名URL失败: %v", err)
+	}
+	fmt.Println(signedURL)
+	return signedURL, nil
+}
