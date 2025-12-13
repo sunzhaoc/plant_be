@@ -29,11 +29,11 @@ func LoadAliConfig() AliConfig {
 	}
 
 	return AliConfig{
-		AccessKeyID:     accessKeyID,                   // 访问密钥ID
-		AccessKeySecret: accessKeySecret,               // 访问密钥Secret
-		RoleARN:         roleARN,                       // 角色ARN
-		RoleSessionName: "oss-sts-session-123",         // STS临时会话名称
-		OSSEndpoint:     "oss-cn-beijing.aliyuncs.com", // OSS服务端点
-		OSSBucketName:   "public-plant-images",         // OSS存储桶名称
+		AccessKeyID:     accessKeyID,                      // 访问密钥ID
+		AccessKeySecret: accessKeySecret,                  // 访问密钥Secret
+		RoleARN:         roleARN,                          // 角色ARN
+		RoleSessionName: "aliyun-sts-session-123",         // STS临时会话名称
+		OSSEndpoint:     "aliyun-cn-beijing.aliyuncs.com", // OSS服务端点
+		OSSBucketName:   "public-plant-images",            // OSS存储桶名称
 	}
 }

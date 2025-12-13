@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/sunzhaoc/plant_be/internal/aliyun"
 	"github.com/sunzhaoc/plant_be/internal/config"
-	"github.com/sunzhaoc/plant_be/internal/oss"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 
 	// 下载图片
 	objectKey := "plant/squamellaria/squamellaria_grayi/img.png"
-	imageBytes, err := oss.DownloadImage(cfg, objectKey)
+	imageBytes, err := aliyun.DownloadImage(cfg, objectKey)
 	if err != nil {
 		log.Fatalf("获取图片失败: %v", err)
 	}
