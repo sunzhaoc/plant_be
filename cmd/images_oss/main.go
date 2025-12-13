@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/sunzhaoc/plant_be/config"
+	"github.com/sunzhaoc/plant_be/internal/config"
 	"github.com/sunzhaoc/plant_be/internal/oss"
 )
 
