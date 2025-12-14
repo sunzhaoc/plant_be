@@ -90,6 +90,5 @@ func GetOssUrl(cfg config.AliConfig, objectKey string, width int, height int) (s
 	if err != nil {
 		return "", fmt.Errorf("生成签名URL失败: %v", err)
 	}
-	//fmt.Println(signedURL)
 	return signedURL, nil
 }
