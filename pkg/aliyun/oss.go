@@ -6,11 +6,10 @@ import (
 	"io"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/sunzhaoc/plant_be/internal/config"
 )
 
 // DownloadImage 通过STS凭证下载OSS图片
-func DownloadImage(cfg config.AliConfig, objectKey string) ([]byte, error) {
+func DownloadImage(cfg AliConfig, objectKey string) ([]byte, error) {
 	stsResp, err := GetSTSCredentials(cfg)
 	if err != nil {
 		return nil, err
@@ -48,7 +47,7 @@ func DownloadImage(cfg config.AliConfig, objectKey string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func GetOssUrl(cfg config.AliConfig, objectKey string, width int, height int) (string, error) {
+func GetOssUrl(cfg AliConfig, objectKey string, width int, height int) (string, error) {
 	stsResp, err := GetSTSCredentials(cfg)
 	if err != nil {
 		return "", err

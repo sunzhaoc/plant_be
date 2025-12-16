@@ -1,0 +1,21 @@
+mysql:
+  ali:
+    host: "rm-2zelx1n8s1qx948289o.mysql.rds.aliyuncs.com"
+    port: "3306"
+    user: "code"
+    password: "SZc19970517"
+    db_name: "szc"
+    charset: "utf8mb4"
+    max_open_conns: 20
+    max_idle_conns: 10
+    conn_max_life_time: 3600
+  ali2:
+    host: "rm-2zelx1n8s1qx948289o.mysql.rds.aliyuncs.com"
+    port: "3306"
+    user: "code"
+    password: "SZc19970517"
+    db_name: "szc"
+    charset: "utf8mb4"
+    max_open_conns: 20
+    max_idle_conns: 10
+    conn_max_life_time: 3600

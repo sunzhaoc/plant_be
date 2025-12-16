@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sunzhaoc/plant_be/internal/aliyun"
-	"github.com/sunzhaoc/plant_be/internal/config"
+	"github.com/sunzhaoc/plant_be/pkg/aliyun"
 )
 
 // ImageResponse 图片URL响应结构
@@ -21,7 +20,7 @@ type ImagesResponse struct {
 
 func main() {
 	r := gin.Default()
-	cfg := config.LoadAliConfig()
+	cfg := aliyun.LoadAliConfig()
 	r.Use(func(c *gin.Context) {
 		// 允许前端域名（生产环境替换为你的前端实际域名，如http://localhost:3000）
 		c.Header("Access-Control-Allow-Origin", "*")

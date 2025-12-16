@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/sts"
-	"github.com/sunzhaoc/plant_be/internal/config"
 )
 
 // GetSTSCredentials 获取STS临时凭证
-func GetSTSCredentials(cfg config.AliConfig) (*sts.AssumeRoleResponse, error) {
+func GetSTSCredentials(cfg AliConfig) (*sts.AssumeRoleResponse, error) {
 	client, err := sts.NewClientWithAccessKey("cn-beijing", cfg.AccessKeyID, cfg.AccessKeySecret)
 	if err != nil {
 		return nil, fmt.Errorf("创建STS客户端失败: %w", err) // 使用%w包装错误，便于上层处理
