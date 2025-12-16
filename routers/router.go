@@ -30,5 +30,7 @@ func InitRouter() {
 
 	r.GET("/api/plant-image", api.GetPlantImageHandler)
 
+	r.POST("/api/register", api.PostRegister)
+
 	r.Run(":8080")
 }
