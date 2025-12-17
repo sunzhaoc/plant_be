@@ -32,5 +32,7 @@ func InitRouter() {
 
 	r.POST("/api/register", api.PostRegister)
 
+	r.POST("/api/login", api.PostLogin)
+
 	r.Run(":8080")
 }
