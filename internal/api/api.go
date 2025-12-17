@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/aliyun"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
+	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
 // ImageResponse 图片URL响应结构
@@ -91,11 +92,17 @@ func PostRegister(c *gin.Context) {
 		return
 	}
 
+	// 4. 密码加密处理
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		// 加密失败
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "服务器内部错误"})
+	}
 	// 4. 执行入库操作
 	newUser := User{
 		Username: req.Username,
 		Email:    req.Email,
-		Password: req.Password,
+		Password: hashedPassword,
 		Phone:    req.Phone,
 	}
 	if err := db.Create(&newUser).Error; err != nil {
