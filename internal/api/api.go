@@ -105,11 +105,5 @@ func PostRegister(c *gin.Context) {
 	}
 
 	// 6. 成功返回
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "注册成功",
-		"data": gin.H{
-			"userId": newUser.ID, // 假设你的 User Model 有 ID
-		},
-	})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "注册成功"})
 }
