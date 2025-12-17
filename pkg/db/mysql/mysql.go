@@ -2,15 +2,18 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // 引入MySQL驱动，实际为driver/mysql
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-var dbInstances = make(map[string]*sql.DB) // 存储已初始化的连接
+var dbInstances = make(map[string]*gorm.DB) // 存储GORM连接实例
 
 func Init(mysqlConfigs map[string]MySQLConfig, initDb []string) error {
 	for _, dbName := range initDb {
@@ -21,36 +24,41 @@ func Init(mysqlConfigs map[string]MySQLConfig, initDb []string) error {
 		// 构建DSN（Data Source Name）
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local",
 			cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.Charset)
-		// 打开数据库连接（不会立即建立连接，只是验证参数）
-		db, err := sql.Open("mysql", dsn)
+
+		// 使用GORM打开连接
+		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Fatalf("mysql connect failed: %v", err)
+			return fmt.Errorf("GORM连接失败[%s]: %v", dbName, err)
+		}
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			return fmt.Errorf("获取底层DB失败[%s]: %v", dbName, err)
 		}
 
 		// 设置连接池参数
-		db.SetMaxOpenConns(cfg.MaxOpen)                                  // 最大打开连接数
-		db.SetMaxIdleConns(cfg.MaxIdle)                                  // 最大空闲连接数
-		db.SetConnMaxLifetime(time.Duration(cfg.LifeTime) * time.Second) // 连接最大存活时间
-		db.SetConnMaxIdleTime(300 * time.Second)                         // 连接最大空闲时间
+		sqlDB.SetMaxOpenConns(cfg.MaxOpen)                                  // 最大打开连接数
+		sqlDB.SetMaxIdleConns(cfg.MaxIdle)                                  // 最大空闲连接数
+		sqlDB.SetConnMaxLifetime(time.Duration(cfg.LifeTime) * time.Second) // 连接最大存活时间
+		sqlDB.SetConnMaxIdleTime(300 * time.Second)                         // 连接最大空闲时间
 
 		// 测试连接（真正建立连接）
-		if err = db.Ping(); err != nil {
-			log.Fatalf("mysql ping failed: %v", err)
+		if err = sqlDB.Ping(); err != nil {
+			return fmt.Errorf("连接测试失败[%s]: %v", dbName, err)
 		}
-		log.Println("mysql connect success!")
-
+		log.Printf("MySQL实例[%s]连接成功", dbName)
 		dbInstances[dbName] = db
 	}
 	return nil
 }
 
-func GetDB(name string) (*sql.DB, error) {
+func GetDB(name string) (*gorm.DB, error) {
 	db, exists := dbInstances[name]
 	if !exists {
-		return nil, fmt.Errorf("db %s not exists", name)
+		return nil, fmt.Errorf("数据库实例[%s]不存在", name)
 	}
 	if db == nil {
-		return nil, fmt.Errorf("db %s is initialized as nil", name)
+		return nil, fmt.Errorf("数据库实例[%s]未初始化", name)
 	}
 	return db, nil
 }
@@ -58,8 +66,13 @@ func GetDB(name string) (*sql.DB, error) {
 func Close() error {
 	var errMsg string
 	for name, db := range dbInstances {
-		if err := db.Close(); err != nil {
-			errMsg += fmt.Sprintf("关闭 %s 实例失败: %v; ", name, err)
+		sqlDB, err := db.DB()
+		if err != nil {
+			errMsg += fmt.Sprintf("获取[%s]底层连接失败: %v; ", name, err)
+			continue
+		}
+		if err := sqlDB.Close(); err != nil {
+			errMsg += fmt.Sprintf("关闭[%s]失败: %v; ", name, err)
 		}
 	}
 	if errMsg != "" {
@@ -68,35 +81,29 @@ func Close() error {
 	return nil
 }
 
+// ExecuteSql 执行SQL并映射结果（利用GORM自动映射）
 func ExecuteSql(dbName string, sqlStr string, args []interface{}, result interface{}) error {
-	dbConn, err := GetDB(dbName)
-
-	// 执行查询
-	rows, err := dbConn.Query(sqlStr, args...)
+	db, err := GetDB(dbName)
 	if err != nil {
-		return fmt.Errorf("query error: %v", err)
+		return err
 	}
-	defer rows.Close()
 
-	// 检查结果参数是否为指针
-	resultVal := reflect.ValueOf(result) // 返回 reflect.Value 对象
+	// 检查结果参数是否为有效指针
+	resultVal := reflect.ValueOf(result)
 	if resultVal.Kind() != reflect.Ptr || resultVal.IsNil() {
-		return fmt.Errorf("result 必须是非 nil 指针")
+		return fmt.Errorf("result必须是非nil指针")
 	}
 
-	// 处理结果
-	resultElem := resultVal.Elem() // 对指针类型的 reflect.Value 进行解引用，获取指针指向的实际值的 reflect.Value 对象
-	switch resultElem.Kind() {
-	case reflect.Slice: // 多条结果
-		return scanSlice(rows, resultElem)
-	case reflect.Struct: // 单条结果
-		if rows.Next() {
-			return scanStruct(rows, resultElem)
+	// 使用GORM执行原生SQL并自动映射结果
+	if err := db.Raw(sqlStr, args...).Scan(result).Error; err != nil {
+		// 保留原有的错误类型（如sql.ErrNoRows）
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return sql.ErrNoRows
 		}
-		return sql.ErrNoRows
-	default:
-		return fmt.Errorf("result 仅支持结构指针或结构体切片指针")
+		return fmt.Errorf("执行SQL失败: %v", err)
 	}
+
+	return nil
 }
 
 func scanStruct(rows *sql.Rows, structRes reflect.Value) error {
