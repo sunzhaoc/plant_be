@@ -34,5 +34,8 @@ func InitRouter() {
 
 	r.POST("/api/login", api.PostLogin)
 
-	r.Run(":8080")
+	err := r.Run(":8080")
+	if err != nil {
+		return
+	}
 }

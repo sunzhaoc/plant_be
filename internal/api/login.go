@@ -21,7 +21,6 @@ func PostLogin(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "服务器内部错误"})
 		return
 	}
-
 	// 2. 绑定并校验参数
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -33,17 +32,25 @@ func PostLogin(c *gin.Context) {
 		return
 	}
 
-	var hashedPassword string
-	query := "SELECT password FROM plant.users WHERE username = ? OR email = ? OR phone = ? LIMIT 1;"
-	query_result := db.Raw(query, req.Account, req.Account, req.Account).Scan(&hashedPassword)
-	if query_result.Error != nil {
+	type UserTable = struct {
+		ID       uint
+		Username string
+		Email    string
+		Phone    string
+		Password string
+	}
+	var user UserTable
+	query := "SELECT id, username, email, password FROM plant.users WHERE username = ? OR email = ? OR phone = ? LIMIT 1;"
+	result := db.Raw(query, req.Account, req.Account, req.Account).Scan(&user)
+
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "数据库服务异常",
 		})
 		return
 	}
-	if query_result.RowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "账号不存在",
@@ -51,7 +58,7 @@ func PostLogin(c *gin.Context) {
 		return
 	}
 
-	if !utils.CheckPasswordHash(req.Password, hashedPassword) {
+	if !utils.CheckPasswordHash(req.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "账号或密码错误",
@@ -62,5 +69,11 @@ func PostLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "登录成功",
+		"user": gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+			"phone":    user.Phone,
+		},
 	})
 }
