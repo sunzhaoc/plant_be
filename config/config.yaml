@@ -4,7 +4,7 @@ mysql:
     port: "3306"
     user: "code"
     password: "SZc19970517"
-    db_name: "szc"
+    db_name: "plant"
     charset: "utf8mb4"
     max_open_conns: 20
     max_idle_conns: 10
