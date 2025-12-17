@@ -50,7 +50,7 @@ func GetDB(name string) (*sql.DB, error) {
 		return nil, fmt.Errorf("db %s not exists", name)
 	}
 	if db == nil {
-		log.Panic("mysql connection pool is not initialized")
+		return nil, fmt.Errorf("db %s is initialized as nil", name)
 	}
 	return db, nil
 }
