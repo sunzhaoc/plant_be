@@ -56,7 +56,7 @@ func (c *CdnAuthConfigTypeA) GenerageCdnAuthUrlTypeA(rawUrl string, timestamp in
 	}
 
 	finalURL := fmt.Sprintf("https://%s%s%sauth_key=%s", c.Domain, path, connector, authKeyParam)
-	fmt.Println(finalURL)
+	//fmt.Println(finalURL)
 	return finalURL, nil
 }
 
