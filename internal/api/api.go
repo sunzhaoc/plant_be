@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/aliyun"
@@ -26,9 +27,16 @@ type ImageResponse struct {
 //	成功: 200状态码和签名URL
 //	失败: 500状态码和空URL
 func GetPlantImageHandler(c *gin.Context) {
-	cfg := aliyun.LoadAliConfig()
 	imgUrl := c.Query("imgUrl")
-	signedURL, err := aliyun.GetOssUrl(cfg, imgUrl, 290, 260)
+	//cfg := aliyun.LoadAliConfig()
+	//signedURL, err := aliyun.GetOssUrl(cfg, imgUrl, 290, 260)
+
+	cfg := aliyun.CdnAuthConfigTypeA{
+		Domain:  "image.antplant.store",
+		AuthKey: "sunzhaochuan",
+	}
+
+	signedURL, err := cfg.GenerageCdnAuthUrlTypeA(imgUrl, time.Now().Unix()+3600)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ImageResponse{URL: ""})
 		return
