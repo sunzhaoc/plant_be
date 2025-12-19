@@ -85,6 +85,12 @@ func GetOssUrl(cfg AliConfig, objectKey string, width int, height int) (string, 
 		imgProcess = "image/quality,q_80"
 	}
 
+	if imgProcess != "" {
+		imgProcess += "/format,webp"
+	} else {
+		imgProcess = "image/quality,q_8/format,webp"
+	}
+
 	signedURL, err := bucket.SignURL(objectKey, oss.HTTPGet, 1000, oss.Process(imgProcess))
 	if err != nil {
 		return "", fmt.Errorf("生成签名URL失败: %v", err)
