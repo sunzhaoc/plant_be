@@ -13,6 +13,11 @@ type ImageResponse struct {
 	URL string `json:"url"`
 }
 
+var cdnConfig = aliyun.CdnAuthConfigTypeA{
+	Domain:  "image.antplant.store",
+	AuthKey: "sunzhaochuan",
+}
+
 // GetPlantImageHandler 获取植物图像的签名URL
 //
 // 从查询参数中获取图片URL，调用阿里云OSS服务生成带有效期的签名URL
@@ -30,13 +35,7 @@ func GetPlantImageHandler(c *gin.Context) {
 	imgUrl := c.Query("imgUrl")
 	//cfg := aliyun.LoadAliConfig()
 	//signedURL, err := aliyun.GetOssUrl(cfg, imgUrl, 290, 260)
-
-	cfg := aliyun.CdnAuthConfigTypeA{
-		Domain:  "image.antplant.store",
-		AuthKey: "sunzhaochuan",
-	}
-
-	signedURL, err := cfg.GenerageCdnAuthUrlTypeA(imgUrl, time.Now().Unix()+3600)
+	signedURL, err := cdnConfig.GenerageCdnAuthUrlTypeA(imgUrl, time.Now().Unix()+3600)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ImageResponse{URL: ""})
 		return
