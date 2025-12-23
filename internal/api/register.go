@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
+	"github.com/sunzhaoc/plant_be/pkg/db/mysql/models"
 	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
@@ -14,14 +15,6 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`           // 邮箱必填，格式验证
 	Password string `json:"password" binding:"required,min=6"`        // 密码必填，至少6位
 	Phone    string `json:"phone" binding:"required,len=11"`          // 手机号 11位
-}
-
-type User struct {
-	ID       uint   `gorm:"primaryKey"` // 手动指定主键
-	Username string `gorm:"column:username;type:varchar(50);uniqueIndex;not null"`
-	Email    string `gorm:"column:email;type:varchar(100);uniqueIndex;not null"`
-	Phone    string `gorm:"column:phone;type:varchar(100);uniqueIndex;not null"`
-	Password string `gorm:"column:password;type:varchar(100);not null"`
 }
 
 // PostRegister 处理用户注册请求
@@ -69,7 +62,7 @@ func PostRegister(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "服务器内部错误"})
 	}
 	// 4. 执行入库操作
-	newUser := User{
+	newUser := models.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: hashedPassword,
