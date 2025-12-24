@@ -24,11 +24,13 @@ func InitRouter() {
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	r.GET("/api/plant-image", middleware.JWTAuthMiddleware(), api.GetPlantImageHandler)
+	r.GET("/api/plant-image", api.GetPlantImageHandler)
 
 	r.POST("/api/register", api.PostRegister)
 
 	r.POST("/api/login", api.PostLogin)
+
+	r.POST("/api/cart/sync-redis", middleware.JWTAuthMiddleware(), api.SyncCartToRedis)
 
 	err := r.Run(":8080")
 	if err != nil {

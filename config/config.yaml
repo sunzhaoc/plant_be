@@ -19,3 +19,12 @@ mysql:
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_life_time: 3600
+redis:
+  ali:
+    #    host: "r-2zesnyi6lh3n4udnbc.redis.rds.aliyuncs.com" # 专网
+    host: "r-2zesnyi6lh3n4udnbcpd.redis.rds.aliyuncs.com" # 公网
+    port: "6379"
+    user: "code"
+    password: "m(5hladieGeWK@cL+o$YA#wL8((p9h$3"
+    db_name: 0
+    pool_size: 20

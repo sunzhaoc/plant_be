@@ -41,7 +41,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(*utils.Claims); ok {
-			c.Set("user_id", claims.UserID)
+			c.Set("userId", claims.UserID)
 			c.Set("username", claims.Username)
 			c.Next()
 		} else {
