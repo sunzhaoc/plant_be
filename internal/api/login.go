@@ -77,10 +77,29 @@ func PostLogin(c *gin.Context) {
 		return
 	}
 
-	slog.Info(fmt.Sprintf("[%d][%s]登录成功", user.ID, user.Username))
+	// 生成 JWT token
+	token, err := utils.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		slog.Error(fmt.Sprintf("生成[%d][%v]的JWT Token失败", user.ID, user.Username), err)
+		return
+	}
+
+	// 设置HttpOnly Cookie
+	c.SetCookie(
+		"plant_token",                    // Cookie名称
+		token,                            // Cookie值（Token）
+		int(utils.TokenExpire.Seconds()), // Token 过期时间（秒）
+		"/",                              // 生效路径（全站）
+		"",                               // 生效域名（空表示当前域名）
+		true,                             // 是否开启HTTPS（生产环境建议true，开发环境false）
+		true,                             // 是否开启HttpOnly（防止XSS攻击，无法通过JS获取）
+	)
+
+	slog.Info(fmt.Sprintf("[%d][%v]登录成功", user.ID, user.Username))
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "登录成功",
+		//"token":   token, // 响应体中返回 Token
 		"user": gin.H{
 			"id":       user.ID,
 			"username": user.Username,
