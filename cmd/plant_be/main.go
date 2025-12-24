@@ -21,7 +21,7 @@ func main() {
 	env := os.Getenv("PLANT_BE_ENV")
 	if env == "production" {
 		slog.Info("通过 VPC 连接 Redis")
-		if err := redis.Init(redis.Load(), []string{"ali_vpc"}); err != nil {
+		if err := redis.Init(redis.Load(), []string{"ali_npa"}); err != nil {
 			log.Fatalf("初始化Redis数据库失败：%v", err)
 		}
 	} else {
