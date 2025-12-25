@@ -24,7 +24,11 @@ func InitRouter() {
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	r.GET("/api/plant-image", api.GetPlantImageHandler)
+	//r.GET("/api/plant-image", api.GetPlantImageHandler)
+
+	r.GET("/api/plants", api.GetPlants)
+
+	r.GET("/api/plant-detail/:plantId", middleware.JWTAuthMiddleware(), api.GetPlantDetail)
 
 	r.POST("/api/register", api.PostRegister)
 
