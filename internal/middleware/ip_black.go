@@ -20,8 +20,8 @@ type IPBlacklistConfig struct {
 var (
 	ipBlackList   = make(map[string]bool)
 	ipListMutex   sync.RWMutex
-	configPath    = "config/ip_blacklist.json" // 配置文件路径
-	refreshPeriod = 30 * time.Second           // 定时刷新间隔（30秒）
+	configPath    = "config/ip_black_list.yaml" // 配置文件路径
+	refreshPeriod = 60 * time.Second            // 定时刷新间隔（30秒）
 )
 
 // 初始化函数：程序启动时加载配置+启动定时刷新
@@ -57,8 +57,6 @@ func loadIPBlacklist() error {
 	for _, ip := range config.Blacklist {
 		ipBlackList[ip] = true
 	}
-
-	fmt.Printf("成功加载IP黑名单，共%d个IP\n", len(ipBlackList))
 	return nil
 }
 
