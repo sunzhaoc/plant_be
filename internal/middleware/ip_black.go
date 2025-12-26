@@ -21,7 +21,7 @@ var (
 	ipBlackList   = make(map[string]bool)
 	ipListMutex   sync.RWMutex
 	configPath    = "config/ip_black_list.yaml" // 配置文件路径
-	refreshPeriod = 10 * time.Second            // 定时刷新间隔（30秒）
+	refreshPeriod = 60 * time.Second            // 定时刷新间隔（30秒）
 )
 
 // 初始化函数：程序启动时加载配置+启动定时刷新
