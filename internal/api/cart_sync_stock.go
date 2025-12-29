@@ -41,8 +41,6 @@ func SyncCartStock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "服务器内部错误"})
 		return
 	}
-
-	slog.Info("11111")
 	// 2. 绑定并校验参数
 	var req CartSyncStockRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
