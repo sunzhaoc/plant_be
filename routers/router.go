@@ -60,6 +60,8 @@ func InitRouter() {
 
 	r.GET("/api/plant-detail/:plantId", middleware.JWTAuthMiddleware(), api.GetPlantDetail)
 
+	r.POST("/api/cart/sync-stock", middleware.JWTAuthMiddleware(), api.SyncCartStock)
+
 	r.POST("/api/register", api.PostRegister)
 
 	r.POST("/api/login", api.PostLogin)

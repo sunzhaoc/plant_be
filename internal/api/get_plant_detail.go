@@ -21,12 +21,13 @@ func GetPlantDetail(c *gin.Context) {
 
 	// 获取植物规格数据
 	type PlantSku = struct {
+		SkuId uint64  `json:"sku_id"`
 		Size  string  `json:"size"`
 		Price float64 `json:"price"`
 		Stock uint    `json:"stock"`
 	}
 	var plantSkuList []PlantSku
-	query := "SELECT `size`, price, stock FROM plant.plant_sku WHERE plant_id = ? ORDER BY sort;"
+	query := "SELECT `id` sku_id, `size`, price, stock FROM plant.plant_sku WHERE plant_id = ? ORDER BY sort;"
 	skuResult := db.Raw(query, plantId).Scan(&plantSkuList)
 	if skuResult.Error != nil {
 		slog.Error("查询植物SKU列表失败", slog.Any("error", skuResult.Error))
