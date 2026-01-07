@@ -57,10 +57,9 @@ func GetOrders(c *gin.Context) {
 		})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data":    "",
+		"data":    orderList,
 	})
 }
