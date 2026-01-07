@@ -72,7 +72,7 @@ func GetOrders(c *gin.Context) {
 	ORDER BY create_time DESC
 	LIMIT 20
 	;`
-	queryResult := db.Debug().Raw(query, uid).Scan(&orderBaseList)
+	queryResult := db.Raw(query, uid).Scan(&orderBaseList)
 	if queryResult.Error != nil {
 		slog.Error("获取用户的订单失败", slog.Any("error", queryResult.Error))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -107,7 +107,7 @@ func GetOrders(c *gin.Context) {
 
 		// 查询当前订单的订单项
 		var items []OrderItem
-		itemResult := db.Debug().Raw(itemQuery, base.OrderId).Scan(&items)
+		itemResult := db.Raw(itemQuery, base.OrderId).Scan(&items)
 		if itemResult.Error != nil {
 			slog.Error("获取订单订单项失败",
 				slog.Any("order_id", base.OrderId),

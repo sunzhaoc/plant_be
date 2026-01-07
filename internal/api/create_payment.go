@@ -95,7 +95,7 @@ func CreatePayment(c *gin.Context) {
 		Price   float64 `gorm:"column:price"`
 	}
 	var skuList []SkuInfo
-	if err := tx.Debug().Raw(skuSql, skuParams...).Scan(&skuList).Error; err != nil {
+	if err := tx.Raw(skuSql, skuParams...).Scan(&skuList).Error; err != nil {
 		tx.Rollback()
 		slog.Error("批量查询SKU失败", "skuIDs", skuParams, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -140,7 +140,7 @@ func CreatePayment(c *gin.Context) {
 		WHERE id IN (%s)
 	`, caseWhenBuilder.String(), wherePlaceholders)
 	finalParams := append(updateParams, skuIdsForWhere...)
-	if err := tx.Debug().Exec(batchUpdateSql, finalParams...).Error; err != nil {
+	if err := tx.Exec(batchUpdateSql, finalParams...).Error; err != nil {
 		tx.Rollback()
 		slog.Error("批量扣减库存失败", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -167,7 +167,7 @@ func CreatePayment(c *gin.Context) {
 		ReceiverPhone:   "",
 		ReceiverAddress: "",
 	}
-	if err := tx.Debug().Create(order).Error; err != nil {
+	if err := tx.Create(order).Error; err != nil {
 		tx.Rollback()
 		slog.Error("插入订单主表失败", "orderSN", orderSn, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -231,7 +231,7 @@ func CreatePayment(c *gin.Context) {
 	}
 
 	// 7. 批量插入订单商品详情表
-	if err := tx.Debug().CreateInBatches(&orderItems, 100).Error; err != nil { // 批量插入（每次最多100条）
+	if err := tx.CreateInBatches(&orderItems, 100).Error; err != nil { // 批量插入（每次最多100条）
 		tx.Rollback()
 		slog.Error("批量插入订单项失败", "orderID", order.OrderSn, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
