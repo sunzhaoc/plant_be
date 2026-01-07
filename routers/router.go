@@ -43,11 +43,11 @@ func InitRouter() {
 
 	// 第四步：配置CORS（保留原有配置）
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://antplant.store/", "http://antplant.store/", "http://localhost:5173"}, // 允许的前端域名
-		AllowCredentials: true,                                                                                   // 开启允许携带凭证（Cookie）
-		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},                                    // 允许的请求方法
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},                                           // 允许的请求头
-		MaxAge:           12 * time.Hour,                                                                         // 预检请求的有效期（可选，默认8小时）
+		AllowOrigins:     []string{"https://antplant.store/", "http://antplant.store/", "http://localhost:5174", "http://localhost:5173"}, // 允许的前端域名
+		AllowCredentials: true,                                                                                                            // 开启允许携带凭证（Cookie）
+		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},                                                             // 允许的请求方法
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},                                                                    // 允许的请求头
+		MaxAge:           12 * time.Hour,                                                                                                  // 预检请求的有效期（可选，默认8小时）
 	}))
 
 	r.GET("/test", func(c *gin.Context) {
@@ -61,6 +61,10 @@ func InitRouter() {
 	r.GET("/api/plant-detail/:plantId", middleware.JWTAuthMiddleware(), api.GetPlantDetail)
 
 	r.POST("/api/cart/sync-stock", middleware.JWTAuthMiddleware(), api.SyncCartStock)
+
+	r.GET("/api/order/get-orders", middleware.JWTAuthMiddleware(), api.GetOrders)
+
+	r.POST("/api/order/create-payment", middleware.JWTAuthMiddleware(), api.CreatePayment)
 
 	r.POST("/api/register", api.PostRegister)
 
