@@ -159,7 +159,7 @@ func CreatePayment(c *gin.Context) {
 	orderSn := generateOrderSn(userId64)
 	order := &models.Orders{
 		OrderSn:         orderSn,
-		UserId:          1,
+		UserId:          userId64,
 		TotalAmount:     totalAmount,
 		PayAmount:       totalAmount,
 		OrderStatus:     0,
