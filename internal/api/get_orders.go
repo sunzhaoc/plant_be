@@ -3,6 +3,7 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
@@ -22,7 +23,24 @@ func GetOrders(c *gin.Context) {
 		return
 	}
 
-	// 2. 获取mysql连接池
+	// 2. 获取并校验分页参数（page：当前页，默认1；pageSize：每页条数，默认10）
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+
+	// 转换为整数并校验
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1 // 非法参数默认第一页
+	}
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 || pageSize > 50 { // 限制最大每页50条，避免性能问题
+		pageSize = 10
+	}
+
+	// 计算偏移量：OFFSET = (页码-1) * 每页条数
+	offset := (page - 1) * pageSize
+
+	// 3. 获取mysql连接池
 	db, err := mysql.GetDB("ali")
 	if err != nil {
 		slog.Error("数据库连接失败: %v", err)
@@ -30,8 +48,7 @@ func GetOrders(c *gin.Context) {
 		return
 	}
 
-	// 3. 定义结构体：拆分订单基础信息和包含订单项的完整订单
-	// 只用于接收orders表的基础数据（无嵌套字段，避免GORM扫描错误）
+	// 4. 定义结构体（保持原有结构不变）
 	type OrderBase struct {
 		OrderId     uint64  `json:"order_id"`
 		OrderSn     string  `json:"order_sn"`
@@ -41,7 +58,6 @@ func GetOrders(c *gin.Context) {
 		CreateTime  string  `json:"create_time"`
 	}
 
-	// 订单项结构体（不变）
 	type OrderItem struct {
 		PlantName      string  `json:"plant_name"`
 		PlantLatinName string  `json:"plant_latin_name"`
@@ -51,15 +67,27 @@ func GetOrders(c *gin.Context) {
 		Quantity       int     `json:"quantity"`
 	}
 
-	// 最终返回的完整订单结构体（包含订单项）
 	type Order struct {
-		OrderBase              // 嵌入基础订单信息
-		OrderItems []OrderItem `json:"order_items"` // 订单项列表
+		OrderBase
+		OrderItems []OrderItem `json:"order_items"`
 	}
 
-	// 查询订单基础数据
+	// 5. 先查询总订单数（用于分页计算）
+	var total int64
+	countQuery := `SELECT COUNT(*) FROM plant.orders WHERE user_id = ?;`
+	countResult := db.Raw(countQuery, uid).Scan(&total)
+	if countResult.Error != nil {
+		slog.Error("查询订单总数失败", slog.Any("error", countResult.Error))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "获取订单总数失败",
+		})
+		return
+	}
+
+	// 6. 查询当前页的订单基础数据
 	var orderBaseList []OrderBase
-	query := `
+	orderQuery := `
 	SELECT
 	    id order_id,
 		order_sn,
@@ -70,9 +98,9 @@ func GetOrders(c *gin.Context) {
 	FROM plant.orders
 	WHERE user_id = ?
 	ORDER BY create_time DESC
-	LIMIT 20
+	LIMIT ? OFFSET ?
 	;`
-	queryResult := db.Raw(query, uid).Scan(&orderBaseList)
+	queryResult := db.Raw(orderQuery, uid, pageSize, offset).Scan(&orderBaseList)
 	if queryResult.Error != nil {
 		slog.Error("获取用户的订单失败", slog.Any("error", queryResult.Error))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -82,7 +110,7 @@ func GetOrders(c *gin.Context) {
 		return
 	}
 
-	// 构建完整的订单列表（包含订单项）
+	// 7. 补充订单项数据
 	var orderList []Order
 	itemQuery := `
 	SELECT
@@ -98,21 +126,17 @@ func GetOrders(c *gin.Context) {
 	;
 	`
 
-	// 遍历基础订单，补充订单项
 	for _, base := range orderBaseList {
-		// 初始化完整订单，先赋值基础信息
 		order := Order{
 			OrderBase: base,
 		}
 
-		// 查询当前订单的订单项
 		var items []OrderItem
 		itemResult := db.Raw(itemQuery, base.OrderId).Scan(&items)
 		if itemResult.Error != nil {
 			slog.Error("获取订单订单项失败",
 				slog.Any("order_id", base.OrderId),
 				slog.Any("error", itemResult.Error))
-			// 即使订单项查询失败，也保留基础订单信息
 			order.OrderItems = []OrderItem{}
 		} else {
 			order.OrderItems = items
@@ -121,9 +145,13 @@ func GetOrders(c *gin.Context) {
 		orderList = append(orderList, order)
 	}
 
+	// 8. 返回数据
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data":    orderList,
+		"data": gin.H{
+			"list":  orderList, // 当前页订单列表
+			"total": total,     // 订单总条数
+		},
 	})
 }
