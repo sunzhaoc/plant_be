@@ -13,8 +13,18 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql/models"
 )
 
+type Address struct {
+	Receiver      string `json:"receiver"`      // 收货人姓名
+	Phone         string `json:"phone"`         // 联系电话
+	Province      string `json:"province"`      // 省
+	City          string `json:"city"`          // 市
+	Area          string `json:"area"`          // 区/县
+	DetailAddress string `json:"detailAddress"` // 详细地址
+}
+
 type PaymentRequest struct {
 	CartItems []CartItem `json:"cartItems"`
+	Address   Address    `json:"address"` // 收货地址
 }
 
 // CartItem 对应前端 cartItems 数组中的单个元素
@@ -157,15 +167,16 @@ func CreatePayment(c *gin.Context) {
 		totalAmount += skuMap[item.SkuId].Price * float64(item.Quantity)
 	}
 	orderSn := generateOrderSn(userId64)
+
 	order := &models.Orders{
 		OrderSn:         orderSn,
 		UserId:          userId64,
 		TotalAmount:     totalAmount,
 		PayAmount:       totalAmount,
 		OrderStatus:     0,
-		ReceiverName:    "",
-		ReceiverPhone:   "",
-		ReceiverAddress: "",
+		ReceiverName:    req.Address.Receiver,
+		ReceiverPhone:   req.Address.Phone,
+		ReceiverAddress: req.Address.Province + req.Address.City + req.Address.Area + req.Address.DetailAddress,
 	}
 	if err := tx.Create(order).Error; err != nil {
 		tx.Rollback()

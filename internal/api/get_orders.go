@@ -59,6 +59,7 @@ func GetOrders(c *gin.Context) {
 	}
 
 	type OrderItem struct {
+		OrderId        uint64  `json:"-"` // 新增：用于分组，不返回给前端
 		PlantName      string  `json:"plant_name"`
 		PlantLatinName string  `json:"plant_latin_name"`
 		SkuSize        string  `json:"sku_size"`
@@ -110,10 +111,30 @@ func GetOrders(c *gin.Context) {
 		return
 	}
 
-	// 7. 补充订单项数据
-	var orderList []Order
+	// 7. 批量查询订单项（核心优化点）
+	// 7.1 提取当前页所有订单ID
+	var orderIds []uint64
+	for _, base := range orderBaseList {
+		orderIds = append(orderIds, base.OrderId)
+	}
+	// 如果没有订单，直接返回空列表，避免无效查询
+	if len(orderIds) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+			"data": gin.H{
+				"list":  []Order{},
+				"total": total,
+			},
+		})
+		return
+	}
+
+	// 7.2 批量查询所有订单项（仅1次SQL）
+	var allOrderItems []OrderItem
 	itemQuery := `
 	SELECT
+		order_id,  -- 新增：查询订单ID，用于分组
 		plant_name,
 		plant_latin_name,
 		sku_size,
@@ -121,31 +142,37 @@ func GetOrders(c *gin.Context) {
 		price,
 		quantity
 	FROM plant.order_items
-	WHERE order_id = ?
+	WHERE order_id IN (?)  -- 批量查询
 	ORDER BY id DESC
 	;
 	`
+	itemResult := db.Raw(itemQuery, orderIds).Scan(&allOrderItems)
+	if itemResult.Error != nil {
+		slog.Error("批量获取订单订单项失败", slog.Any("error", itemResult.Error))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "获取订单详情失败",
+		})
+		return
+	}
 
+	// 7.3 将订单项按订单ID分组（map映射）
+	itemMap := make(map[uint64][]OrderItem)
+	for _, item := range allOrderItems {
+		itemMap[item.OrderId] = append(itemMap[item.OrderId], item)
+	}
+
+	// 8. 组装最终订单数据（从map取订单项，无循环SQL）
+	var orderList []Order
 	for _, base := range orderBaseList {
 		order := Order{
-			OrderBase: base,
+			OrderBase:  base,
+			OrderItems: itemMap[base.OrderId],
 		}
-
-		var items []OrderItem
-		itemResult := db.Raw(itemQuery, base.OrderId).Scan(&items)
-		if itemResult.Error != nil {
-			slog.Error("获取订单订单项失败",
-				slog.Any("order_id", base.OrderId),
-				slog.Any("error", itemResult.Error))
-			order.OrderItems = []OrderItem{}
-		} else {
-			order.OrderItems = items
-		}
-
 		orderList = append(orderList, order)
 	}
 
-	// 8. 返回数据
+	// 9. 返回数据
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
