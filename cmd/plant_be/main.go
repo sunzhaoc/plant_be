@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
-	"github.com/sunzhaoc/plant_be/pkg/db/redis"
 	"github.com/sunzhaoc/plant_be/routers"
 )
 
@@ -16,9 +15,9 @@ func main() {
 	defer mysql.Close()
 
 	// 初始化 Redis
-	if err := redis.Init(redis.Load(), []string{"ali"}); err != nil {
-		log.Fatalf("初始化Redis数据库失败：%v", err)
-	}
+	//if err := redis.Init(redis.Load(), []string{"ali"}); err != nil {
+	//	log.Fatalf("初始化Redis数据库失败：%v", err)
+	//}
 
 	routers.InitRouter()
 }
