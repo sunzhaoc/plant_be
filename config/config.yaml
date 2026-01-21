@@ -22,10 +22,10 @@ mysql:
     conn_max_life_time: 3600
 redis:
   ali:
-    host: "r-2zesnyi6lh3n4udnbc.redis.rds.aliyuncs.com" # 专网
-#    host: "r-2zesnyi6lh3n4udnbcpd.redis.rds.aliyuncs.com" # 公网
+    host: "r-2zed7sne01gjxm2e8x.redis.rds.aliyuncs.com" # 专网
+#    host: "r-2zed7sne01gjxm2e8xpd.redis.rds.aliyuncs.com" # 公网
     port: "6379"
     user: "code"
-    password: "m(5hladieGeWK@cL+o$YA#wL8((p9h$3"
+    password: "64wn)oYw1!=XKpk^)&S43-MMfAg^GX"
     db_name: 0
     pool_size: 20
