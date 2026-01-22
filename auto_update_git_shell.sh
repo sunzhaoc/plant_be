@@ -9,11 +9,11 @@ fi
 # echo "Submit info is: $commit_msg
 
 go mod tidy
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o plant_be ./cmd/plant_be/main.go
-upx -9 plant_be
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o plant_be_exec ./cmd/plant_be/main.go
+upx -9 plant_be_exec
 
 git add .
 git commit -m "$commit_msg" 
 git push
 
-scp plant_be plant_be:/root/
+scp plant_be_exec plant_be:
