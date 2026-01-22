@@ -15,3 +15,5 @@ upx -9 plant_be
 git add .
 git commit -m "$commit_msg" 
 git push
+
+scp plant_be plant_be:/root/

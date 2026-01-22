@@ -59,3 +59,6 @@ coverage.out
 
 # Docker相关（若用Docker）
 .dockerignore
+
+# 打包文件
+plant_be
