@@ -3,14 +3,53 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
+	"github.com/sunzhaoc/plant_be/pkg/db/mysql/models"
 )
 
+func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
+	userIdVal, exists := ctx.Get("userId")
+	if !exists || userIdVal == nil {
+		slog.Warn("asyncPlantTask: userId不存在或为空")
+		return
+	}
+	userId, ok := userIdVal.(uint)
+	if !ok {
+		slog.Error("asyncPlantTask: userId类型错误，期望uint", "actual_type", slog.Any("type", userIdVal))
+		return
+	}
+
+	// 获取数据库连接
+	db, err := mysql.GetDB("ali")
+	if err != nil {
+		slog.Error("asyncPlantTask: 数据库连接失败", "error", err)
+		return
+	}
+
+	plantIdUint, err := strconv.ParseUint(plantId, 10, 64)
+	if err != nil {
+		slog.Error("asyncPlantTask: plantId解析为uint失败", "plantId", plantId, "error", err)
+		return
+	}
+	plantIdFinal := uint(plantIdUint)
+
+	newAccessLog := models.UserAccessPlantDetailLog{
+		UserId:  userId,
+		PlantId: plantIdFinal,
+	}
+	if err := db.Create(&newAccessLog).Error; err != nil {
+		slog.Error("asyncPlantTask: 插入用户访问日志失败", "error", err, "user_id", userId, "plant_id", plantIdFinal)
+		return
+	}
+	return
+}
+
 func GetPlantDetail(c *gin.Context) {
-	//slog.Info("获取植物详情")
 	plantId := c.Param("plantId")
+	go recordUserAccessPlantDetailLog(c.Copy(), plantId) // 记录一下日志
 
 	db, err := mysql.GetDB("ali")
 	if err != nil {
