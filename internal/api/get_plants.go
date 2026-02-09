@@ -22,10 +22,11 @@ func GetPlants(c *gin.Context) {
 		LatinName  string  `json:"latin_name"`   // 拉丁学名
 		MainImgUrl string  `json:"main_img_url"` // 主图地址
 		MinPrice   float64 `json:"min_price"`    // 起始价格
+		Stock      int     `json:"stock"`        // 库存
 	}
 	var plantList []Plant
 
-	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price FROM plant.plants WHERE is_on_sale = 1;"
+	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock FROM plant.plants WHERE is_on_sale = 1;"
 	result := db.Raw(query).Scan(&plantList)
 
 	if result.Error != nil {
