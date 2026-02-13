@@ -8,6 +8,7 @@ type UserAccessPlantDetailLog struct {
 	Id         uint      `gorm:"column:id;primaryKey;autoIncrement;type:bigint unsigned;comment:主键ID"`
 	UserId     uint      `gorm:"column:user_id;not null;type:bigint;comment:用户ID"`
 	PlantId    uint      `gorm:"column:plant_id;not null;type:bigint;comment:植物ID"`
+	Ip         string    `gorm:"column:ip;not null;type:varchar(64);default:'';comment:用户访问IP地址"`
 	CreateTime time.Time `gorm:"column:create_time;not null;type:datetime;default:CURRENT_TIMESTAMP;comment:创建时间"`
 	UpdateTime time.Time `gorm:"column:update_time;not null;type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;comment:更新时间"`
 }

@@ -22,6 +22,13 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 		return
 	}
 
+	// 获取客户端IP
+	clientIP := ctx.ClientIP()
+	if clientIP == "" {
+		slog.Warn("asyncPlantTask: 无法获取客户端IP")
+		clientIP = "unknown"
+	}
+
 	// 获取数据库连接
 	db, err := mysql.GetDB("ali")
 	if err != nil {
@@ -39,6 +46,7 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 	newAccessLog := models.UserAccessPlantDetailLog{
 		UserId:  userId,
 		PlantId: plantIdFinal,
+		Ip:      clientIP,
 	}
 	if err := db.Create(&newAccessLog).Error; err != nil {
 		slog.Error("asyncPlantTask: 插入用户访问日志失败", "error", err, "user_id", userId, "plant_id", plantIdFinal)
