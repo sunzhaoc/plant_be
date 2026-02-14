@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql/models"
+	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
 func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
@@ -24,9 +25,22 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 
 	// 获取客户端IP
 	clientIP := ctx.ClientIP()
+	ipInfo := map[string]string{
+		"Country": "",
+		"Prov":    "",
+		"City":    "",
+		"Area":    "",
+		"Isp":     "",
+	}
 	if clientIP == "" {
 		slog.Warn("asyncPlantTask: 无法获取客户端IP")
 		clientIP = "unknown"
+	} else {
+		var err error
+		ipInfo, err = utils.GetIpInfo(clientIP)
+		if err != nil {
+			slog.Warn("asyncPlantTask: 获取IP信息失败", "error", err)
+		}
 	}
 
 	// 获取数据库连接
@@ -44,9 +58,14 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 	plantIdFinal := uint(plantIdUint)
 
 	newAccessLog := models.UserAccessPlantDetailLog{
-		UserId:  userId,
-		PlantId: plantIdFinal,
-		Ip:      clientIP,
+		UserId:   userId,
+		PlantId:  plantIdFinal,
+		Ip:       clientIP,
+		Country:  ipInfo["Country"],
+		Province: ipInfo["Prov"],
+		City:     ipInfo["City"],
+		Area:     ipInfo["Area"],
+		Isp:      ipInfo["Isp"],
 	}
 	if err := db.Create(&newAccessLog).Error; err != nil {
 		slog.Error("asyncPlantTask: 插入用户访问日志失败", "error", err, "user_id", userId, "plant_id", plantIdFinal)
@@ -100,6 +119,22 @@ func GetPlantDetail(c *gin.Context) {
 		})
 		return
 	}
+
+	// 获取植物的介绍
+	//type PlantDetail = struct {
+	//	Detail string `json:"detail"`
+	//}
+	//var plantDetail PlantDetail
+	//query = "SELECT detail FROM plant.plants WHERE id = ?;"
+	//detailResult := db.Raw(query, plantId).Scan(&plantDetail)
+	//if detailResult.Error != nil {
+	//	slog.Error("查询植物介绍失败", slog.Any("error", detailResult.Error))
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"success": false,
+	//		"message": "查询植物图片列表失败",
+	//	})
+	//	return
+	//}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
