@@ -23,10 +23,11 @@ func GetPlants(c *gin.Context) {
 		MainImgUrl string  `json:"main_img_url"` // 主图地址
 		MinPrice   float64 `json:"min_price"`    // 起始价格
 		Stock      int     `json:"stock"`        // 库存
+		Tag        string  `json:"tag"`          // 标签
 	}
 	var plantList []Plant
 
-	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock FROM plant.plants WHERE is_on_sale = 1 ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, id;"
+	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag FROM plant.plants WHERE is_on_sale = 1 ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, id;"
 	result := db.Raw(query).Scan(&plantList)
 
 	if result.Error != nil {
