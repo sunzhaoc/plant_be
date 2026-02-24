@@ -16,6 +16,12 @@ func GetPlants(c *gin.Context) {
 		return
 	}
 
+	genus := c.Query("genus") // 获取参数中的属名
+	if genus == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "genus parameter is required"})
+		return
+	}
+
 	type Plant = struct {
 		PlantId    uint64  `json:"plant_id"`     // 改为uint64匹配数据库bigint unsigned类型
 		Name       string  `json:"name"`         // 中文名
@@ -27,8 +33,8 @@ func GetPlants(c *gin.Context) {
 	}
 	var plantList []Plant
 
-	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag FROM plant.plants WHERE is_on_sale = 1 ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, id;"
-	result := db.Raw(query).Scan(&plantList)
+	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag FROM plant.plants WHERE is_on_sale = 1 AND genus = ? ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, id;"
+	result := db.Raw(query, genus).Scan(&plantList)
 
 	if result.Error != nil {
 		slog.Error("查询植物列表失败", slog.Any("error", result.Error))
