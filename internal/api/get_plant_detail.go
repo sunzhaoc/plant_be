@@ -121,27 +121,32 @@ func GetPlantDetail(c *gin.Context) {
 	}
 
 	// 获取植物的介绍
-	//type PlantDetail = struct {
-	//	Detail string `json:"detail"`
-	//}
-	//var plantDetail PlantDetail
-	//query = "SELECT detail FROM plant.plants WHERE id = ?;"
-	//detailResult := db.Raw(query, plantId).Scan(&plantDetail)
-	//if detailResult.Error != nil {
-	//	slog.Error("查询植物介绍失败", slog.Any("error", detailResult.Error))
-	//	c.JSON(http.StatusInternalServerError, gin.H{
-	//		"success": false,
-	//		"message": "查询植物图片列表失败",
-	//	})
-	//	return
-	//}
+	type PlantMain = struct {
+		Name      string `json:"name"`
+		LatinName string `json:"latin_name"`
+		Detail    string `json:"detail"`
+	}
+	var plantDetail PlantMain
+	query = "SELECT `name`, `latin_name`, `detail` FROM plant.plants WHERE id = ?;"
+	detailResult := db.Raw(query, plantId).Scan(&plantDetail)
+	if detailResult.Error != nil {
+		slog.Error("查询植物介绍失败", slog.Any("error", detailResult.Error))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "查询植物图片列表失败",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "获取植物详情成功",
 		"data": gin.H{
-			"skus":   plantSkuList,
-			"images": plantImageList,
+			"plant_name":       plantDetail.Name,
+			"plant_latin_name": plantDetail.LatinName,
+			"plant_detail":     plantDetail.Detail,
+			"skus":             plantSkuList,
+			"images":           plantImageList,
 		},
 	})
 }
