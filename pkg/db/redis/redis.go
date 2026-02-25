@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var Nil = redis.Nil
 var redisDbInstances = make(map[string]*redis.Client)
 
 func Init(redisConfig map[string]RedisConfig, initDb []string) error {

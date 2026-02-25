@@ -66,9 +66,10 @@ func InitRouter() {
 
 	r.POST("/api/order/create-payment", middleware.JWTAuthMiddleware(), api.CreatePayment)
 
-	r.POST("/api/register", api.PostRegister)
-
 	r.POST("/api/login", api.PostLogin)
+	r.POST("/api/register", api.PostRegister)
+	r.POST("/api/forgot-password/send-code", api.SendVerificationCodeHandler)
+	r.POST("/api/forgot-password/reset", api.ResetPasswordHandler)
 
 	r.POST("/api/cart/sync-redis", middleware.JWTAuthMiddleware(), api.SyncCartToRedis)
 
