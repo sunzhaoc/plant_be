@@ -10,7 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/natefinch/lumberjack"
 	"github.com/sunzhaoc/plant_be/internal/api"
+	"github.com/sunzhaoc/plant_be/internal/api/manage"
 	"github.com/sunzhaoc/plant_be/internal/middleware"
+	"github.com/sunzhaoc/plant_be/pkg/aliyun"
 )
 
 // setupLogger 配置Gin日志输出到文件并实现拆分
@@ -55,6 +57,12 @@ func InitRouter() {
 	})
 
 	//r.GET("/api/plant-image", api.GetPlantImageHandler)
+
+	// 商品管理接口
+	r.GET("/api/plant-manage/plants", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ManageGetPlants)
+	r.POST("/api/plant/plant-manage/save-plant", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ApiPlantManageSavePlant)
+	r.GET("/api/plant/plant-manage/get-plant-detail/:plantId", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ApiPlantManageGetPlantDetail)
+	r.GET("/api/plant/plant-manage/get-upload-policy", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), aliyun.GetOSSUploadPolicy)
 
 	r.GET("/api/plants", api.GetPlants)
 

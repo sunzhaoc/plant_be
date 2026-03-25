@@ -8,6 +8,8 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
+var ADMIN_ALLOW_LIST = []string{"御品汤包"}
+
 // JWTAuthMiddleware 验证JWT Token的中间件
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -52,5 +54,49 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 
 		}
+	}
+}
+
+func AdminAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		username, exists := c.Get("username")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "用户信息未解析",
+			})
+			c.Abort()
+			return
+		}
+
+		// 校验用户名是否在管理员白名单中
+		usernameStr, ok := username.(string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "用户名格式错误",
+			})
+			c.Abort()
+			return
+		}
+
+		isAdmin := false
+		for _, admin := range ADMIN_ALLOW_LIST {
+			if admin == usernameStr {
+				isAdmin = true
+				break
+			}
+		}
+
+		if !isAdmin {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "无管理员权限，禁止访问",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
 	}
 }
