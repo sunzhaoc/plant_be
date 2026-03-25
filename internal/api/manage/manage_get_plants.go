@@ -27,7 +27,7 @@ func ManageGetPlants(c *gin.Context) {
 	}
 	var plantList []Plant
 
-	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, is_on_sale FROM plant.plants ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, latin_name;"
+	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, is_on_sale FROM plant.plants ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, latin_name;"
 	result := db.Raw(query).Scan(&plantList)
 
 	if result.Error != nil {
