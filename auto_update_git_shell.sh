@@ -17,3 +17,4 @@ git commit -m "$commit_msg"
 git push
 
 scp plant_be_exec plant_be:
+echo "请执行该命令：scp plant_be_exec plant_be:"

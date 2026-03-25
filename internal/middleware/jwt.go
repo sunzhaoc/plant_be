@@ -8,7 +8,7 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
-var ADMIN_ALLOW_LIST = []string{"御品汤包"}
+var ADMIN_ALLOW_LIST = []string{"御品汤包", "Utsugi"}
 
 // JWTAuthMiddleware 验证JWT Token的中间件
 func JWTAuthMiddleware() gin.HandlerFunc {
