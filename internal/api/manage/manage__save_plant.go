@@ -116,13 +116,6 @@ func ApiPlantManageSavePlant(c *gin.Context) {
 			return
 		}
 
-		if err := tx.CreateInBatches(&newPlantSkuList, 10).Error; err != nil { // 每10条一批插入
-			tx.Rollback() // 回滚事务
-			slog.Error("新增SKU失败", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "新增规格失败"})
-			return
-		}
-
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			slog.Error("提交事务失败", "error", err)

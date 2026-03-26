@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/natefinch/lumberjack"
 	"github.com/sunzhaoc/plant_be/internal/api"
+	"github.com/sunzhaoc/plant_be/internal/api/auth"
 	"github.com/sunzhaoc/plant_be/internal/api/manage"
 	"github.com/sunzhaoc/plant_be/internal/middleware"
 	"github.com/sunzhaoc/plant_be/pkg/aliyun"
@@ -74,10 +75,10 @@ func InitRouter() {
 
 	r.POST("/api/order/create-payment", middleware.JWTAuthMiddleware(), api.CreatePayment)
 
-	r.POST("/api/login", api.PostLogin)
-	r.POST("/api/register", api.PostRegister)
-	r.POST("/api/forgot-password/send-code", api.SendVerificationCodeHandler)
-	r.POST("/api/forgot-password/reset", api.ResetPasswordHandler)
+	r.POST("/api/login", auth.PostLogin)
+	r.POST("/api/register", auth.PostRegister)
+	r.POST("/api/forgot-password/send-code", auth.SendVerificationCodeHandler)
+	r.POST("/api/forgot-password/reset", auth.ResetPasswordHandler)
 
 	r.POST("/api/cart/sync-redis", middleware.JWTAuthMiddleware(), api.SyncCartToRedis)
 
