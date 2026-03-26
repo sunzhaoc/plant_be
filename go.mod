@@ -1,6 +1,6 @@
 module github.com/sunzhaoc/plant_be
 
-go 1.25.5
+go 1.26.1
 
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.107

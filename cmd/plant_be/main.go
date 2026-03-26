@@ -5,10 +5,15 @@ import (
 
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
 	"github.com/sunzhaoc/plant_be/pkg/db/redis"
+	"github.com/sunzhaoc/plant_be/pkg/utils"
 	"github.com/sunzhaoc/plant_be/routers"
 )
 
 func main() {
+	if err := utils.InitSlog(); err != nil {
+		panic("日志初始化失败: " + err.Error())
+	}
+
 	// 初始化 Mysql
 	if err := mysql.Init(mysql.Load(), []string{"ali"}); err != nil {
 		log.Fatal("初始化Mysql数据库失败：%v", err)
