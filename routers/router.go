@@ -57,30 +57,30 @@ func InitRouter() {
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	//r.GET("/api/plant-image", api.GetPlantImageHandler)
-
 	// 商品管理接口
 	r.GET("/api/plant-manage/plants", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ManageGetPlants)
 	r.POST("/api/plant/plant-manage/save-plant", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ApiPlantManageSavePlant)
 	r.GET("/api/plant/plant-manage/get-plant-detail/:plantId", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), manage.ApiPlantManageGetPlantDetail)
 	r.GET("/api/plant/plant-manage/get-upload-policy", middleware.JWTAuthMiddleware(), middleware.AdminAuthMiddleware(), aliyun.GetOSSUploadPolicy)
 
-	r.GET("/api/plants", api.GetPlants)
+	r.GET("/api/plants", api.GetPlants)                                                     // 获取所有植物信息
+	r.GET("/api/plant-detail/:plantId", middleware.JWTAuthMiddleware(), api.GetPlantDetail) // 获取植物详情
 
-	r.GET("/api/plant-detail/:plantId", middleware.JWTAuthMiddleware(), api.GetPlantDetail)
+	r.POST("/api/cart/sync-stock", middleware.JWTAuthMiddleware(), api.SyncCartStock)      // 同步购物车库存
+	r.GET("/api/order/get-orders", middleware.JWTAuthMiddleware(), api.GetOrders)          // 获取订单列表
+	r.POST("/api/order/create-payment", middleware.JWTAuthMiddleware(), api.CreatePayment) // 创建支付订单
 
-	r.POST("/api/cart/sync-stock", middleware.JWTAuthMiddleware(), api.SyncCartStock)
+	// 用户登录注册接口
+	r.POST("/api/login", auth.PostLogin)                                       // 用户登录
+	r.POST("/api/register", auth.PostRegister)                                 // 用户注册
+	r.POST("/api/forgot-password/send-code", auth.SendVerificationCodeHandler) // 忘记密码发送验证码
+	r.POST("/api/forgot-password/reset", auth.ResetPasswordHandler)            // 忘记密码重置
 
-	r.GET("/api/order/get-orders", middleware.JWTAuthMiddleware(), api.GetOrders)
-
-	r.POST("/api/order/create-payment", middleware.JWTAuthMiddleware(), api.CreatePayment)
-
-	r.POST("/api/login", auth.PostLogin)
-	r.POST("/api/register", auth.PostRegister)
-	r.POST("/api/forgot-password/send-code", auth.SendVerificationCodeHandler)
-	r.POST("/api/forgot-password/reset", auth.ResetPasswordHandler)
-
+	// 购物车接口（即将废弃）
 	r.POST("/api/cart/sync-redis", middleware.JWTAuthMiddleware(), api.SyncCartToRedis)
+
+	// 废弃接口
+	//r.GET("/api/plant-image", api.GetPlantImageHandler)
 
 	err := r.Run(":8080")
 	if err != nil {

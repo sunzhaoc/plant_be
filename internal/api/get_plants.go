@@ -16,9 +16,18 @@ func GetPlants(c *gin.Context) {
 		return
 	}
 
-	genus := c.Query("genus") // 获取参数中的属名
-	if genus == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "genus parameter is required"})
+	isNewStr := c.Query("is_new")
+	genus := c.Query("genus")
+
+	// 校验参数互斥性：两个参数不能同时存在
+	if isNewStr != "" && genus != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "is_new 和 genus 参数不能同时存在"})
+		return
+	}
+
+	// 校验参数必填性：至少传递其中一个参数
+	if isNewStr == "" && genus == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "必须传递 is_new 或 genus 参数"})
 		return
 	}
 
@@ -32,10 +41,38 @@ func GetPlants(c *gin.Context) {
 		Tag        string  `json:"tag"`          // 标签
 	}
 	var plantList []Plant
+	var query string
+	var args []interface{}
 
-	query := "SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag FROM plant.plants WHERE is_on_sale = 1 AND genus = ? ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, id;"
-	result := db.Raw(query, genus).Scan(&plantList)
+	if genus != "" {
+		// genus参数存在
+		query = `
+			SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag 
+			FROM plant.plants 
+			WHERE is_on_sale = 1 AND genus = ? 
+			ORDER BY CASE WHEN stock IS NULL THEN 0 WHEN stock > 0 THEN -1 ELSE 0 END, tag DESC, id
+			;
+		`
+		args = []interface{}{genus}
+	} else {
+		// is_new参数存在
+		if isNewStr != "true" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "is_new 参数值必须为 'true'"})
+			return
+		}
+		query = `
+			SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag 
+			FROM plant.plants 
+			WHERE is_on_sale = 1 AND stock > 0 AND tag = '新品'
+			ORDER BY id DESC
+			LIMIT 50
+			;
+		`
+		args = []interface{}{}
+	}
 
+	// 执行查询
+	result := db.Raw(query, args...).Scan(&plantList)
 	if result.Error != nil {
 		slog.Error("查询植物列表失败", slog.Any("error", result.Error))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -45,9 +82,10 @@ func GetPlants(c *gin.Context) {
 		return
 	}
 
+	// 返回结果
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "查询上架植物列表成功",
+		"message": "查询植物列表成功",
 		"data":    plantList,
 		"count":   len(plantList),
 	})
