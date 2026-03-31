@@ -11,6 +11,7 @@ import (
 	"github.com/natefinch/lumberjack"
 	"github.com/sunzhaoc/plant_be/internal/api"
 	"github.com/sunzhaoc/plant_be/internal/api/auth"
+	"github.com/sunzhaoc/plant_be/internal/api/gift"
 	"github.com/sunzhaoc/plant_be/internal/api/manage"
 	"github.com/sunzhaoc/plant_be/internal/middleware"
 	"github.com/sunzhaoc/plant_be/pkg/aliyun"
@@ -75,6 +76,9 @@ func InitRouter() {
 	r.POST("/api/register", auth.PostRegister)                                 // 用户注册
 	r.POST("/api/forgot-password/send-code", auth.SendVerificationCodeHandler) // 忘记密码发送验证码
 	r.POST("/api/forgot-password/reset", auth.ResetPasswordHandler)            // 忘记密码重置
+
+	// 抽奖接口
+	r.GET("/api/gift/get-today-lottery-draw", middleware.JWTAuthMiddleware(), gift.GetTodayLotteryDraw) // 抽奖
 
 	// 购物车接口（即将废弃）
 	r.POST("/api/cart/sync-redis", middleware.JWTAuthMiddleware(), api.SyncCartToRedis)
