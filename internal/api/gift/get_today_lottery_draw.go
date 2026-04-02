@@ -92,7 +92,7 @@ func GetTodayLotteryDraw(c *gin.Context) {
 	// --------------------------
 	rand.Seed(time.Now().UnixNano())
 	randomNum := rand.Intn(100) + 1 // 0~99
-	isWin := randomNum <= 3
+	isWin := randomNum <= 50
 
 	// --------------------------
 	// 如果中奖：设置全局中奖标记（今天所有人都不能再中）

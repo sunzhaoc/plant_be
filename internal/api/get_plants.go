@@ -64,7 +64,7 @@ func GetPlants(c *gin.Context) {
 			SELECT id plant_id, name, latin_name, main_img_url, min_price, stock, tag 
 			FROM plant.plants 
 			WHERE is_on_sale = 1 AND stock > 0 AND tag = '新品'
-			ORDER BY id DESC
+			ORDER BY update_time DESC
 			LIMIT 50
 			;
 		`
