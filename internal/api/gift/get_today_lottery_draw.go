@@ -15,6 +15,8 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/db/redis"
 )
 
+const WinRate = 0.1
+
 // GetTodayLotteryDraw 抽奖接口
 // 规则：
 // 1. 每个用户每小时最多抽 1 次
@@ -91,8 +93,9 @@ func GetTodayLotteryDraw(c *gin.Context) {
 	// 规则3：1% 概率中奖（修正原逻辑错误）
 	// --------------------------
 	rand.Seed(time.Now().UnixNano())
-	randomNum := rand.Intn(100) + 1 // 0~99
-	isWin := randomNum <= 10
+	randomNum := rand.Float64()
+	slog.Info("中奖随机数为：", randomNum, "中奖概率为: ", WinRate)
+	isWin := randomNum < WinRate
 
 	// --------------------------
 	// 如果中奖：设置全局中奖标记（今天所有人都不能再中）
