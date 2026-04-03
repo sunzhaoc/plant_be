@@ -25,7 +25,6 @@ const WinRate = 0.1
 func GetTodayLotteryDraw(c *gin.Context) {
 	// 1. 获取用户ID
 	uid, exists := c.Get("userId")
-	//fmt.Print("中奖用户：", uid) // TODO 调试用
 	if !exists || uid == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
