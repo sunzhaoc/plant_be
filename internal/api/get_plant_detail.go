@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +23,16 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 	if !ok {
 		slog.Error("asyncPlantTask: userId类型错误，期望uint", "actual_type", slog.Any("type", userIdVal))
 		return
+	}
+
+	deviceInfoJSON := json.RawMessage("{}")
+	if encodedDeviceInfo := ctx.GetHeader("X-Device-Info"); encodedDeviceInfo != "" {
+		if decodedStr, err := url.QueryUnescape(encodedDeviceInfo); err == nil {
+			var temp json.RawMessage
+			if err := json.Unmarshal([]byte(decodedStr), &temp); err == nil {
+				deviceInfoJSON = temp
+			}
+		}
 	}
 
 	// 获取客户端IP
@@ -58,14 +70,15 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 	plantIdFinal := uint(plantIdUint)
 
 	newAccessLog := models.UserAccessPlantDetailLog{
-		UserId:   userId,
-		PlantId:  plantIdFinal,
-		Ip:       clientIP,
-		Country:  ipInfo["Country"],
-		Province: ipInfo["Prov"],
-		City:     ipInfo["City"],
-		Area:     ipInfo["Area"],
-		Isp:      ipInfo["Isp"],
+		UserId:     userId,
+		PlantId:    plantIdFinal,
+		Ip:         clientIP,
+		Country:    ipInfo["Country"],
+		Province:   ipInfo["Prov"],
+		City:       ipInfo["City"],
+		Area:       ipInfo["Area"],
+		Isp:        ipInfo["Isp"],
+		DeviceInfo: deviceInfoJSON,
 	}
 	if err := db.Create(&newAccessLog).Error; err != nil {
 		slog.Error("asyncPlantTask: 插入用户访问日志失败", "error", err, "user_id", userId, "plant_id", plantIdFinal)

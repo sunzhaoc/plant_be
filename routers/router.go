@@ -50,7 +50,7 @@ func InitRouter() {
 		AllowOrigins:     []string{"https://antplant.store/", "http://antplant.store/", "http://localhost:5174", "http://localhost:5173"}, // 允许的前端域名
 		AllowCredentials: true,                                                                                                            // 开启允许携带凭证（Cookie）
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},                                                             // 允许的请求方法
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},                                                                    // 允许的请求头
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-Device-Info"},                                                   // 允许的请求头
 		MaxAge:           12 * time.Hour,                                                                                                  // 预检请求的有效期（可选，默认8小时）
 	}))
 
