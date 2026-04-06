@@ -15,7 +15,8 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/db/redis"
 )
 
-const WinRate = 0.1
+const WinRate = 1
+const WinStartTime = "2026-04-06 18:00:00"
 
 // GetTodayLotteryDraw 抽奖接口
 // 规则：
@@ -94,7 +95,9 @@ func GetTodayLotteryDraw(c *gin.Context) {
 	rand.Seed(time.Now().UnixNano())
 	randomNum := rand.Float64()
 	slog.Info("中奖随机数为：", randomNum, "中奖概率为: ", WinRate)
-	isWin := randomNum < WinRate
+
+	targetTime, _ := time.ParseInLocation("2006-01-02 15:04:05", WinStartTime, time.Local)
+	isWin := (time.Now().After(targetTime) || now.Equal(targetTime)) && randomNum < WinRate
 
 	// --------------------------
 	// 如果中奖：设置全局中奖标记（今天所有人都不能再中）
