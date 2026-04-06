@@ -15,7 +15,7 @@ import (
 	"github.com/sunzhaoc/plant_be/pkg/db/redis"
 )
 
-const WinRate = 1
+const WinRate = 0.4
 const WinStartTime = "2026-04-06 18:00:00"
 
 // GetTodayLotteryDraw 抽奖接口
