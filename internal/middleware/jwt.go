@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,47 +14,59 @@ var ADMIN_ALLOW_LIST = []string{"御品汤包", "Utsugi"}
 // JWTAuthMiddleware 验证JWT Token的中间件
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var tokenStr string
+		var useCookie bool
+
 		// 方式1：从Cookie获取Token
-		tokenStr, err := c.Cookie("plant_token")
-		// 方式2：从Authorization头获取Token（兼容前端手动携带）
-		if err != nil {
+		if cookieToken, err := c.Cookie("plant_token"); err == nil {
+			tokenStr = cookieToken
+			useCookie = true
+		} else {
+			// 方式2：从Authorization头获取Token（兼容前端手动携带）
+			slog.Warn("从Authorization头获取Token")
 			authHeader := c.GetHeader("Authorization")
-			if len(authHeader) <= 7 || authHeader[:7] != "Bearer " {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"success": false,
-					"message": "未携带有效Token",
-				})
-				c.Abort()
-				return
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenStr = authHeader[7:]
+				useCookie = false
 			}
-			tokenStr = authHeader[7:]
 		}
 
-		// 解析Token
-		token, err := jwt.ParseWithClaims(tokenStr, &utils.Claims{}, func(token *jwt.Token) (interface{}, error) {
-			return utils.GetJWTSecretKey(), nil
-		})
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Token无效或已过期",
-			})
+		if tokenStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未携带有效Token"})
 			c.Abort()
 			return
 		}
 
-		if claims, ok := token.Claims.(*utils.Claims); ok {
-			c.Set("userId", claims.UserID)
-			c.Set("username", claims.Username)
-			c.Next()
-		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Token解析失败",
-			})
-			c.Abort()
+		// 2. 解析 Token
+		claims := &utils.Claims{}
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+			return utils.GetJWTSecretKey(), nil
+		})
 
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "Token无效或已过期"})
+			c.Abort()
+			return
 		}
+
+		// 3. 自动刷新逻辑（核心修改）
+		if utils.ShouldRefresh(claims) {
+			newToken, err := utils.GenerateToken(claims.UserID, claims.Username)
+			if err == nil {
+				// 如果原本是 Cookie 方式，自动写回 Cookie（前端无感）
+				if useCookie {
+					c.SetCookie("plant_token", newToken, int(utils.TokenExpire.Seconds()), "/", "", false, true)
+				}
+				// 同时也放在 Header 中，方便前端通过拦截器手动更新（如果是 Header 方式）
+				//c.Header("New-Token", newToken)
+				//c.Header("Access-Control-Expose-Headers", "New-Token")
+			}
+		}
+
+		// 4. 设置上下文
+		c.Set("userId", claims.UserID)
+		c.Set("username", claims.Username)
+		c.Next()
 	}
 }
 

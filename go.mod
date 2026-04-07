@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-mail/mail/v2 v2.3.0
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/redis/go-redis/v9 v9.17.2
