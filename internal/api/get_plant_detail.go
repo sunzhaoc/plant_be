@@ -1,15 +1,19 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql"
 	"github.com/sunzhaoc/plant_be/pkg/db/mysql/models"
+	"github.com/sunzhaoc/plant_be/pkg/db/redis"
 	"github.com/sunzhaoc/plant_be/pkg/utils"
 )
 
@@ -44,14 +48,58 @@ func recordUserAccessPlantDetailLog(ctx *gin.Context, plantId string) {
 		"Area":    "",
 		"Isp":     "",
 	}
+
 	if clientIP == "" {
+		// 客户端IP为空，获取失败
 		slog.Warn("asyncPlantTask: 无法获取客户端IP")
 		clientIP = "unknown"
 	} else {
-		var err error
-		ipInfo, err = utils.GetIpInfo(clientIP)
+		// 客户端IP不为空，获取成功
+		rdb, err := redis.GetDb("ali")
 		if err != nil {
-			slog.Warn("asyncPlantTask: 获取IP信息失败", "error", err)
+			// Redis 客户端异常
+			slog.Warn("asyncPlantTask: 获取Redis客户端失败，降级到直接查询IP信息", "error", err)
+		} else {
+			// Redis 客户端正常
+			redisKey := "ip_info:" + clientIP // 定义Redis key（格式：ip_info:客户端IP）
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			ipInfoStr, err := rdb.Get(ctx, redisKey).Result() // 从Redis获取用户ip信息
+
+			// Redis获取成功则反序列化使用
+			if err == nil && ipInfoStr != "" {
+				if err := json.Unmarshal([]byte(ipInfoStr), &ipInfo); err == nil {
+					slog.Debug("asyncPlantTask: 从Redis缓存获取IP信息成功", "clientIP", clientIP)
+				} else {
+					slog.Warn("asyncPlantTask: Redis缓存IP信息反序列化失败，降级到查询IP信息", "error", err)
+				}
+			} else if !errors.Is(err, redis.Nil) {
+				slog.Warn("asyncPlantTask: 从Redis获取IP信息失败，降级到查询IP信息", "error", err)
+			}
+		}
+		if ipInfo["Country"] == "" && ipInfo["Prov"] == "" && ipInfo["City"] == "" {
+			var err error
+			ipInfo, err = utils.GetIpInfo(clientIP)
+			if err != nil {
+				slog.Warn("asyncPlantTask: 获取IP信息失败", "error", err)
+			} else {
+				if rdb != nil {
+					ctxRedis, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+					defer cancel()
+					ipInfoBytes, _ := json.Marshal(ipInfo)
+					err := rdb.SetEx(
+						ctxRedis,
+						"ip_info:"+clientIP,
+						string(ipInfoBytes),
+						15*24*time.Hour, // 15天有效期
+					).Err()
+					if err != nil {
+						slog.Warn("asyncPlantTask: IP信息写入Redis失败", "error", err, "clientIP", clientIP)
+					} else {
+						slog.Debug("asyncPlantTask: IP信息写入Redis成功", "clientIP", clientIP)
+					}
+				}
+			}
 		}
 	}
 
